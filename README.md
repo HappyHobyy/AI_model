@@ -8,6 +8,6 @@
 
 24.05.21 모델 학습 완료
 
-<배포>
+<배포> </br>
 AI 모델 파일 - hobby_model.keras </br>
 나머지 파일 - infer.py + usage.py 코드 합치셔서 배포하시면 됩니다.
