@@ -7,3 +7,6 @@
 4. 모델 배포 ( Rest API )
 
 24.05.21 모델 학습 완료
+
+AI 모델 - hobby_model.keras
+나머지 배포 파일 - infer.py + usage.py 코드 합치셔서 배포하시면 됩니다.
