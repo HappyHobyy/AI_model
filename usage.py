@@ -9,5 +9,5 @@ IM = InferModule(model)
 
 if __name__ == '__main__':
     # 사용자의 문항별 답변 항목
-    inferringResponse = IM.start_inferring([1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1])
+    inferringResponse = IM.start_inferring([0,2,3,1,2,3,2,1])
     print(inferringResponse)

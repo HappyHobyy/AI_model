@@ -24,11 +24,18 @@ class InferModule:
                 self.score_bias.append(sum(self.position_score[:idx]))
 
     def start_inferring(self, user_answer):
-        question_type = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
+        question_type = [0, 0, 1, 1, 2, 2, 3, 3]
         infer_score = [0, 0, 0, 0]
         u_type = ''
         for q_type, u_answer in zip(question_type, user_answer):
-            if u_answer == 2: infer_score[q_type] += 1
+            if u_answer == 3:
+                infer_score[q_type] += 3
+            elif u_answer == 2:
+                infer_score[q_type] += 2
+            elif u_answer == 1:
+                infer_score[q_type] += 1
+
+        infer_score = [round(score / 2) for score in infer_score]
 
         if infer_score[0] >= 2: u_type += 'E'
         else: u_type += 'I'
