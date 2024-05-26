@@ -5,12 +5,60 @@ from keras import layers
 from dataloader import DataLoader
 import argparse
 import matplotlib.pyplot as plt
+
 def vectorize_sequences(sequences, dimension):
     results = np.zeros((len(sequences), dimension))
     for i, sequence in enumerate(sequences):
         sequence = list(sequence)
         results[i, sequence] = 1.
     return results
+
+def grid_search(dl, args):
+    position_score = [4, 4, 4, 4]
+    shape_X = sum(position_score)
+    dl.setBias(position_score)
+
+    X_labels = np.arange(dl.getCount())
+    scores_with_bias = dl.getDatasetWithBias()
+
+    X_train = vectorize_sequences(scores_with_bias, sum(position_score))
+    one_hot_train_labels = to_categorical(X_labels)
+
+    # 그리드 서치할 파라미터 값들
+    batch_sizes = [4, 8, 16, 32]
+    epochs_values = [100, 150]
+
+    best_accuracy = 0
+    best_params = {}
+
+    for batch_size in batch_sizes:
+        for epochs in epochs_values:
+            model = models.Sequential([
+                layers.Dense(40, activation='relu', input_shape=(shape_X,)),
+                layers.Dense(20, activation='relu'),
+                layers.Dense(dl.getCount(), activation='softmax')
+            ])
+
+            model.compile(optimizer='adam',
+                          loss='categorical_crossentropy',
+                          metrics=['accuracy'])
+
+            history = model.fit(X_train,
+                                one_hot_train_labels,
+                                epochs=epochs,
+                                batch_size=batch_size,
+                                verbose=0)
+
+            accuracy = model.evaluate(X_train, one_hot_train_labels, verbose=0)[1]
+
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_params = {'batch_size': batch_size, 'epochs': epochs}
+
+    print("Best parameters:", best_params)
+    print("Best accuracy:", best_accuracy)
+
+    return best_params
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -20,24 +68,27 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # 데이터 전처리
     dl = DataLoader(args.data_path)
+
+    best_params = grid_search(dl, args)
+
+    # 데이터 전처리
     position_score = [4, 4, 4, 4]
     shape_X = sum(position_score)
     dl.setBias(position_score)
 
-    X_labels = np.array([i for i in range(dl.getCount())])
-    num2hobby = dl.getNum2Hobby()
+    X_labels = np.arange(dl.getCount())
     scores_with_bias = dl.getDatasetWithBias()
 
     X_train = vectorize_sequences(scores_with_bias, sum(position_score))
     one_hot_train_labels = to_categorical(X_labels)
 
     # 새 모델로 시작
-    model = models.Sequential()
-    model.add(layers.Dense(40, activation='relu', input_shape=(shape_X,)))
-    model.add(layers.Dense(20, activation='relu'))
-    model.add(layers.Dense(dl.getCount(), activation='softmax'))
+    model = models.Sequential([
+        layers.Dense(40, activation='relu', input_shape=(shape_X,)),
+        layers.Dense(20, activation='relu'),
+        layers.Dense(dl.getCount(), activation='softmax')
+    ])
 
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
@@ -46,9 +97,9 @@ if __name__ == '__main__':
     # Train
     history = model.fit(X_train,
                         one_hot_train_labels,
-                        epochs=args.epoch,
-                        batch_size=args.batch_size,
-                        )
+                        epochs=best_params['epochs'],
+                        batch_size=best_params['batch_size'],
+                        verbose=1)
 
     # training and validation loss
     loss = history.history['loss']
@@ -56,7 +107,7 @@ if __name__ == '__main__':
     epochs = range(1, len(loss) + 1)
 
     plt.plot(epochs, loss, 'b-', label='Training loss')
-    plt.title('Training and validation loss')
+    plt.title('Training loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
